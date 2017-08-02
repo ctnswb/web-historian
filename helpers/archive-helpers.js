@@ -1,5 +1,6 @@
 var fs = require('fs');
 var path = require('path');
+var http = require('http');
 var _ = require('underscore');
 
 /*
@@ -26,16 +27,76 @@ exports.initialize = function(pathsObj) {
 // modularize your code. Keep it clean!
 
 exports.readListOfUrls = function(callback) {
+  fs.readFile(exports.paths.list, 'utf-8', function(err,data){
+    if(err) {
+      callback(null, err);
+    } else {
+      callback(data.split('\n'), null);
+    }
+  })
 };
 
 exports.isUrlInList = function(url, callback) {
+  exports.readListOfUrls(function (listOfUrls, err) {
+    if (err) {
+      callback(err);
+    } else {
+      if (listOfUrls.indexOf(url) > -1) {
+        callback(true);
+      } else {
+        callback(false);
+      }
+    }
+  });
 };
 
 exports.addUrlToList = function(url, callback) {
+  exports.isUrlInList(url, function(inList){
+    if (!inList) {
+      fs.appendFile(exports.paths.list, url + "\n", function(err){
+        if(err) {
+          callback(false);
+        } else {
+          callback(true);
+        }
+      });
+    } else {
+      callback(false);
+    }
+  });
 };
 
 exports.isUrlArchived = function(url, callback) {
+  fs.open(exports.paths.archivedSites + '/' + url, 'r', function(err, data){
+    if (err) {
+      callback(false);
+    } else {
+      callback(true);
+    }
+  });
 };
 
 exports.downloadUrls = function(urls) {
+  for( var i = 0; i < urls.length; i++ ) {
+    var currentUrl = urls[i];
+    if (!exports.isUrlArchived(currentUrl, function(param) {return param;})) {
+      http.get('http://' + currentUrl, function(res) {
+        var dataStr = '';
+        res.on('data', function(dataChunk) {
+          dataStr += dataChunk;
+        })
+        res.on('end', function() {
+          fs.writeFile(exports.paths.archivedSites + '/' + currentUrl, dataStr, function(err, data) {
+            if ( err ) {
+              console.log('wtf is going on');
+            } else {
+              exports.addUrlToList(currentUrl, function() {
+                return 'added';
+              });
+            }
+          });
+        });
+      });
+    }
+  }
 };
