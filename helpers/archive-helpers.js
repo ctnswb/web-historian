@@ -27,13 +27,13 @@ exports.initialize = function(pathsObj) {
 // modularize your code. Keep it clean!
 
 exports.readListOfUrls = function(callback) {
-  fs.readFile(exports.paths.list, 'utf-8', function(err,data){
-    if(err) {
+  fs.readFile(exports.paths.list, 'utf-8', function(err, data) {
+    if (err) {
       callback(null, err);
     } else {
       callback(data.split('\n'), null);
     }
-  })
+  });
 };
 
 exports.isUrlInList = function(url, callback) {
@@ -51,10 +51,10 @@ exports.isUrlInList = function(url, callback) {
 };
 
 exports.addUrlToList = function(url, callback) {
-  exports.isUrlInList(url, function(inList){
+  exports.isUrlInList(url, function(inList) {
     if (!inList) {
-      fs.appendFile(exports.paths.list, url + "\n", function(err){
-        if(err) {
+      fs.appendFile(exports.paths.list, url + '\n', function(err) {
+        if (err) {
           callback(false);
         } else {
           callback(true);
@@ -69,34 +69,36 @@ exports.addUrlToList = function(url, callback) {
 exports.isUrlArchived = function(url, callback) {
   fs.open(exports.paths.archivedSites + '/' + url, 'r', function(err, data){
     if (err) {
-      callback(false);
+      callback(false, url);
     } else {
-      callback(true);
+      callback(true, url);
     }
   });
 };
 
 exports.downloadUrls = function(urls) {
-  for( var i = 0; i < urls.length; i++ ) {
+  console.log('listofURLs:', urls);
+  for ( var i = 0; i < urls.length; i++ ) {
     var currentUrl = urls[i];
-    if (!exports.isUrlArchived(currentUrl, function(param) {return param;})) {
-      http.get('http://' + currentUrl, function(res) {
-        var dataStr = '';
-        res.on('data', function(dataChunk) {
-          dataStr += dataChunk;
-        })
-        res.on('end', function() {
-          fs.writeFile(exports.paths.archivedSites + '/' + currentUrl, dataStr, function(err, data) {
-            if ( err ) {
-              console.log('wtf is going on');
-            } else {
-              exports.addUrlToList(currentUrl, function() {
-                return 'added';
-              });
-            }
+    exports.isUrlArchived(currentUrl, function(isArchived, currentUrl) {
+      if (!isArchived) {
+        http.get('http://' + currentUrl, function(response) {
+          var dataStr = '';
+          response.on('data', function(chunk) {
+            dataStr += chunk;
+          });
+          response.on('end', function() {
+            fs.writeFile(exports.paths.archivedSites + '/' + currentUrl, dataStr, function(err, data) {
+              if (err) {
+                console.log('not written');
+              } else {
+                console.log('wrote site:', currentUrl);
+              }
+            });
           });
         });
-      });
-    }
+      }
+    });
   }
 };
+

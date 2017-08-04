@@ -20,16 +20,16 @@ var readFile = function(path, callback) {
       callback(null, data);
     }
   });
-}
+};
 
 var respond = function (res, statusCode, data) {
   res.writeHead(statusCode, httpHelpers.headers);
   res.end(data);
-}
+};
 
 exports.handleRequest = function (req, res) {
-  if(req.method === 'GET') {
-    readFile(req.url, function(err, data){
+  if (req.method === 'GET') {
+    readFile(req.url, function(err, data) {
       if (err) {
         respond(res, 404, err.message);
       } else {
@@ -37,19 +37,19 @@ exports.handleRequest = function (req, res) {
       }
     });
   } else if (req.method === 'POST') {
-    var receivingData = "";
-    req.on('data', function(chunk){
+    var receivingData = '';
+    req.on('data', function(chunk) {
       receivingData += chunk;
     });
-    req.on('end', function(){
+    req.on('end', function() {
       var receivedUrl = querystring.parse(receivingData).url;
-      archive.addUrlToList(receivedUrl, function(){
-        archive.isUrlArchived(receivedUrl, function(archived){
+      archive.addUrlToList(receivedUrl, function() {
+        archive.isUrlArchived(receivedUrl, function(archived) {
           var readUrl = '/loading.html';
           if (archived) {
             readUrl = receivedUrl;
           }
-          readFile(readUrl, function(err, data){
+          readFile(readUrl, function(err, data) {
             if (err) {
               respond(res, 404, err.message);
             } else {
