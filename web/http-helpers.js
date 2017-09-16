@@ -11,11 +11,19 @@ exports.headers = {
 };
 
 exports.serveAssets = function(res, asset, callback) {
-  // Write some code here that helps serve up your static files!
-  // (Static files are things like html (yours or archived from others...),
-  // css, or anything that doesn't change often.)
+  if (asset === '/') {
+    wholePath = archive.paths.siteAssets + '/index.html';
+  } else if (asset === '/loading.html') {
+    wholePath = archive.paths.siteAssets + '/loading.html';
+  } else {
+    wholePath = archive.paths.archivedSites + '/' + asset;
+  }
+  fs.readFile(wholePath, function(err, data) {
+    if (err) {
+      callback(err, null);
+    } else {
+      callback(null, data);
+    }
+  });
 };
 
-
-
-// As you progress, keep thinking about what helper functions you can put here!

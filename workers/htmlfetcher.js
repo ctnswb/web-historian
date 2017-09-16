@@ -5,13 +5,14 @@ var CronJob = require('cron').CronJob;
 
 
 exports.fetcher = new CronJob('* * * * *', function() {
-    console.log('fetching new HTML');
-    archive.readListOfUrls(function(listOfUrls, err) {
+  console.log('fetching new HTML');
+  archive.readListOfUrls()
+    .then(function(listOfUrls) {
       archive.downloadUrls(listOfUrls);
     });
-  }, function () {
-    console.log('done');
-  },
-  false, /* Start the job right now */
-  'America/Los_Angeles' /* Time zone of this job. */
+}, function () {
+  console.log('done');
+},
+false, /* Start the job right now */
+'America/Los_Angeles' /* Time zone of this job. */
 );
